@@ -13,17 +13,16 @@ import Lobby from './pages/Lobby'
 export default function App() {
   return (
     <Router>
+      <Route exact path="/">
+        <Home />
+      </Route>
       <Switch>
-        <Route path="/game">
+        <Route exact path="/game">
           <Game />
         </Route>
 
-        <Route path="/lobby">
+        <Route exact path="/lobby">
           <Lobby />
-        </Route>
-
-        <Route path="/">
-          <Home />
         </Route>
       </Switch>
     </Router>

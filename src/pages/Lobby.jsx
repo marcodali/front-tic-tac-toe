@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import ClipLoader from 'react-spinners/ClipLoader'
-import { useLocation } from 'react-router-dom'
+import {
+  useHistory,
+  useLocation,
+} from 'react-router-dom'
 import io from 'socket.io-client'
 import Game from './Game'
 import Modal from 'react-modal'
@@ -27,7 +30,7 @@ const modalStyles = {
 Modal.setAppElement('#app')
 
 const socket = io(
-  'http://ec2-18-188-166-37.us-east-2.compute.amazonaws.com'
+  'https://server-tic-tac-toe.herokuapp.com'
 )
 
 const Lobby = () => {
@@ -35,8 +38,8 @@ const Lobby = () => {
 
   const location = useLocation()
 
-  const [gameCallback, setGameCallback] =
-    useState()
+  const history = useHistory()
+
   const [gameData, setGameData] = useState({})
 
   const [modalIsOpen, setIsModalOpen] =
@@ -47,19 +50,23 @@ const Lobby = () => {
   useEffect(() => {
     socket.emit('UPDATE', location.state.email)
 
-    socket.on('GAME', (data, callback) => {
+    socket.on('GAME', data => {
       setRivalEmail(data.rival.email)
-      setGameCallback(callback)
       setGameData(data)
       setIsModalOpen(true)
     })
 
-    socket.on('GAME_CAN_START', () =>
+    socket.on('disconnect', () => {
+      setIsConnected(false)
+    })
+
+    socket.on('GAME_CAN_START', gameData => {
+      console.log(gameData)
       history.push({
         pathname: '/game',
         state: { gameData },
       })
-    )
+    })
 
     socket.on('GAME_CANCELLED', () =>
       history.push({
@@ -73,6 +80,8 @@ const Lobby = () => {
     return () => {
       socket.off('GAME')
       socket.off('GAME_CANCELLED')
+      socket.off('GAME_CAN_START')
+      socket.off('disconnect')
     }
   }, [])
 
@@ -84,11 +93,13 @@ const Lobby = () => {
       game: gameData,
     }
     socket.emit('RESPUESTA_GAME', res)
-    history.push({
-      pathname: '/game',
-      state: { gameData },
-    })
+    // history.push({
+    //   pathname: '/game',
+    //   state: { gameData },
+    // })
   }
+
+  console.log(gameData)
 
   return (
     <>

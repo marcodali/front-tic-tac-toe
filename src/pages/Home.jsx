@@ -4,7 +4,6 @@ import { useHistory } from 'react-router-dom'
 import Game from '../pages/Game'
 import io from 'socket.io-client'
 import '../App.css'
-import Lobby from './Lobby'
 
 const modalStyles = {
   content: {
@@ -23,7 +22,7 @@ const modalStyles = {
 Modal.setAppElement('#app')
 
 const socket = io(
-  'http://ec2-18-188-166-37.us-east-2.compute.amazonaws.com'
+  'https://server-tic-tac-toe.herokuapp.com'
 )
 
 export default function Home() {
@@ -127,7 +126,6 @@ export default function Home() {
             Tic Tac Toe en React by Brian Dev
           </h1>
         </header>
-        <Game />
       </div>
     </>
   )

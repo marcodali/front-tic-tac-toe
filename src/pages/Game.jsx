@@ -1,5 +1,7 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Grid from '../components/Grid'
+import { useLocation } from 'react-router-dom'
+import io from 'socket.io-client'
 
 const clone = x => JSON.parse(JSON.stringify(x))
 
@@ -48,10 +50,10 @@ const NEXT_TURN = {
   X: 'O',
 }
 
-const getInitialState = () => ({
+const getInitialState = symbolUser => ({
   grid: newTicTacToeGrid(),
   status: 'inProgress',
-  turn: 'X',
+  turn: symbolUser,
 })
 
 const reducer = (state, action) => {
@@ -98,20 +100,48 @@ const reducer = (state, action) => {
   }
 }
 
+const socket = io(
+  'https://server-tic-tac-toe.herokuapp.com'
+)
+
 const Game = () => {
+  const location = useLocation()
+
   const [state, dispatch] = React.useReducer(
     reducer,
-    getInitialState()
+    getInitialState(
+      location.state.gameData.you_play_with
+    )
   )
   const { grid, status, turn } = state
 
   const handleClick = (x, y) => {
+    console.log(x, y)
     dispatch({ type: 'CLICK', payload: { x, y } })
+    socket.emit('TIRADA', { x, y })
   }
 
   const reset = () => {
     dispatch({ type: 'RESET' })
   }
+
+  useEffect(() => {
+    socket.emit(
+      'UPDATE',
+      location.state.gameData.you_are
+    )
+    socket.on('TIRADA_RIVAL', coordinates => {
+      dispatch({
+        type: 'CLICK',
+        payload: {
+          x: coordinates.x,
+          y: coordinates.y,
+        },
+      })
+    })
+  }, [])
+
+  console.log(socket)
 
   return (
     <div
