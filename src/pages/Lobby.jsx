@@ -47,6 +47,9 @@ const Lobby = () => {
 
   const [rivalEmail, setRivalEmail] = useState('')
 
+  const [waitingForRival, setWaitingForRival] =
+    useState(false)
+
   useEffect(() => {
     socket.emit('UPDATE', location.state.email)
 
@@ -61,19 +64,23 @@ const Lobby = () => {
     })
 
     socket.on('GAME_CAN_START', gameData => {
-      console.log(gameData)
       history.push({
         pathname: '/game',
         state: { gameData },
       })
     })
 
-    socket.on('GAME_CANCELLED', () =>
+    socket.on('GAME_CANCELLED', () => {
       history.push({
         pathname: '/lobby',
-        state: { email },
+        state: { email: location.state.email },
       })
-    )
+      setIsModalOpen(false)
+      setLoading(true)
+      setTimeout(() => {
+        socket.emit('WANNA_PLAY')
+      }, 3000)
+    })
 
     socket.emit('WANNA_PLAY')
 
@@ -86,6 +93,7 @@ const Lobby = () => {
   }, [])
 
   const handleGameAnswer = answer => {
+    setWaitingForRival(answer)
     const res = {
       answer: answer
         ? 'ACCEPTED_MATCH'
@@ -110,26 +118,39 @@ const Lobby = () => {
         style={modalStyles}
         contentLabel="Example Modal"
       >
-        <p className="wanna-play-text">
-          El rival {rivalEmail} quiere jugar
-          contra ti
-        </p>
-        <div className="wanna-play-buttons-container">
-          <button
-            className="wanna-play-button"
-            onClick={() => handleGameAnswer(true)}
-          >
-            Quiero jugar
-          </button>
-          <button
-            className="wanna-play-button"
-            onClick={() =>
-              handleGameAnswer(false)
-            }
-          >
-            Ahora no
-          </button>
-        </div>
+        {waitingForRival ? (
+          <div>
+            <p>
+              Esperando confirmación de{' '}
+              {rivalEmail}...
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="wanna-play-text">
+              El rival {rivalEmail} quiere jugar
+              contra ti
+            </p>
+            <div className="wanna-play-buttons-container">
+              <button
+                className="wanna-play-button"
+                onClick={() =>
+                  handleGameAnswer(true)
+                }
+              >
+                Quiero jugar
+              </button>
+              <button
+                className="wanna-play-button"
+                onClick={() =>
+                  handleGameAnswer(false)
+                }
+              >
+                Ahora no
+              </button>
+            </div>
+          </>
+        )}
       </Modal>
       {loading ? (
         <div className="lobby-container">
@@ -147,9 +168,7 @@ const Lobby = () => {
           />
         </div>
       ) : (
-        <Game
-          socket={{ socketUrl: '4fdfsfsf' }}
-        />
+        <Game />
       )}
     </>
   )
